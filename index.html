@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kanban GitHub Pages</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <header>
+        <h1>Sistema Kanban</h1>
+        <div class="controls">
+            <select id="employee-select">
+                <option value="">Selecione um funcionário</option>
+                <!-- Opções serão preenchidas via JavaScript -->
+            </select>
+            <button id="edit-employees">Editar Funcionários</button>
+            <button id="add-task">Adicionar Tarefa</button>
+            <button id="print-stats">Imprimir Estatísticas</button>
+        </div>
+    </header>
+
+    <div class="kanban-board">
+        <div class="column" id="todo">
+            <h2>FAZER</h2>
+            <div class="tasks" id="todo-tasks"></div>
+        </div>
+        <div class="column" id="doing">
+            <h2>FAZENDO</h2>
+            <div class="tasks" id="doing-tasks"></div>
+        </div>
+        <div class="column" id="done">
+            <h2>FEITO</h2>
+            <div class="tasks" id="done-tasks"></div>
+        </div>
+    </div>
+
+    <!-- Modal para adicionar tarefa -->
+    <div id="task-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Adicionar Nova Tarefa</h2>
+            <input type="text" id="task-title" placeholder="Título da Tarefa">
+            <textarea id="task-description" placeholder="Descrição"></textarea>
+            <button id="save-task">Salvar Tarefa</button>
+        </div>
+    </div>
+
+    <!-- Modal para editar funcionários -->
+    <div id="employee-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Editar Funcionários</h2>
+            <div id="employee-list"></div>
+            <button id="add-employee">Adicionar Funcionário</button>
+            <button id="save-employees">Salvar Alterações</button>
+        </div>
+    </div>
+
+    <!-- Modal de estatísticas -->
+    <div id="stats-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Estatísticas</h2>
+            <div id="stats-content"></div>
+            <canvas id="stats-chart" width="400" height="400"></canvas>
+        </div>
+    </div>
+</body>
+</html>
