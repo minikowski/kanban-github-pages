@@ -13,11 +13,12 @@
         <h1>Sistema Kanban</h1>
         <div class="controls">
             <select id="employee-select">
-                <option value="">Selecione um funcionário</option>
+                <option value="">Selecione um colaborador</option>
                 <!-- Opções serão preenchidas via JavaScript -->
             </select>
-            <button id="edit-employees">Editar Funcionários</button>
+            <button id="edit-employees">Editar Colaboradores</button>
             <button id="add-task">Adicionar Tarefa</button>
+            <button id="save-data" class="save-btn">Salvar Alterações</button>
             <button id="print-stats">Imprimir Estatísticas</button>
         </div>
     </header>
@@ -52,9 +53,9 @@
     <div id="employee-modal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <h2>Editar Funcionários</h2>
+            <h2>Editar Colaboradores</h2>
             <div id="employee-list"></div>
-            <button id="add-employee">Adicionar Funcionário</button>
+            <button id="add-employee">Adicionar Colaborador</button>
             <button id="save-employees">Salvar Alterações</button>
         </div>
     </div>
@@ -67,6 +68,12 @@
             <div id="stats-content"></div>
             <canvas id="stats-chart" width="400" height="400"></canvas>
         </div>
+    </div>
+
+    <!-- Seção de Histórico -->
+    <div class="history-section">
+        <h2>Histórico Completo</h2>
+        <div class="history-container" id="history-log"></div>
     </div>
 </body>
 </html>
