@@ -1,13 +1,75 @@
 // Configuração inicial
-const REPO_OWNER = 'seu-usuario'; // Substitua pelo seu usuário do GitHub
-const REPO_NAME = 'seu-repositorio'; // Substitua pelo nome do repositório
+const REPO_OWNER = 'seu-usuario';
+const REPO_NAME = 'seu-repositorio';
 const DATA_FILE = 'data/kanban.json';
 const GITHUB_TOKEN = ''; // Adicione seu token de acesso pessoal do GitHub se necessário
+
+// Lista de colaboradores
+const COLLABORATORS = [
+    "Adriana de Oliveira Ribeiro",
+    "Aline Aranda Gonçalves dos Santos",
+    "Aline Arantes Loureiro",
+    "Ana Claudia da Silva",
+    "Ana Claudia Monteiro dos Santos",
+    "Ana Paula Alves Rodrigues",
+    "Ana Paula Rodrigues de Mello",
+    "Andressa Priscila Marrezi Silva",
+    "Andrew Lourenço Rodrigues",
+    "Bianca Gomides Tavares Silva",
+    "Bruna Adriele Garcia Mendes",
+    "Cintia Andreia Martins",
+    "Claudio Marcio de Melo",
+    "Daiane Aparecida Santana",
+    "Daniela dos Santos Pereira",
+    "Daniele Cristina Moreira Marques",
+    "Danielly dos Santos Claudino",
+    "Dener Diniz de Souza",
+    "Edineia Ferreira Salvatore",
+    "Elaine Alves Pereira",
+    "Elizabeth Fukuchima Silverio Longo",
+    "Eliziane Saline dos Santos",
+    "Eva Cordeiro dos Santos",
+    "Eva Maria Balaguer",
+    "Fernanda Aparecida dos Santos Andrade",
+    "Fernanda Urias",
+    "Franciana Maria Pontes",
+    "Gabriel Sampaio Strauss",
+    "Gisele Santiago Estércio",
+    "Isabely Vanessa Pascual Ferreira",
+    "Janaina Cristina Baptista Justino",
+    "Jenifer Alves Freschi",
+    "Jeniffer Karolaine Guilherme da Silva",
+    "Julia Gonçalves Bianco",
+    "Juliana de Meira",
+    "Juliana Luzia Dias",
+    "Lais de Souza Gonçalves Carvalho",
+    "Leonardo da Silva Santos",
+    "Leticia Lupion Ramos",
+    "Lindiana Souza Santos",
+    "Livia Amabile Vivan Pagotti",
+    "Luana Aparecida da Silva",
+    "Lucas Henrique Nomura",
+    "Marcia Pereira dos Santos",
+    "Marcia Vaz Correia",
+    "Maria Luiza Vazquez Carelli",
+    "Neverton Noia da Silva",
+    "Pamela Dieize Pereira Esmerio",
+    "Patrick Braga",
+    "Paulo Roberto Gianeti Coelho",
+    "Ricardo Bernardes Candido",
+    "Sandiele Ianes da Silva",
+    "Tatiane Gouveia da Fonseca",
+    "Thainara Assis Pereira",
+    "Thais Aimê Alves Damazio",
+    "Victor Luis Minikowski",
+    "Viviane Alves Molina"
+];
 
 // Elementos do DOM
 const employeeSelect = document.getElementById('employee-select');
 const editEmployeesBtn = document.getElementById('edit-employees');
 const addTaskBtn = document.getElementById('add-task');
+const saveDataBtn = document.getElementById('save-data');
 const printStatsBtn = document.getElementById('print-stats');
 const kanbanBoard = document.querySelector('.kanban-board');
 const taskModal = document.getElementById('task-modal');
@@ -16,33 +78,14 @@ const statsModal = document.getElementById('stats-modal');
 
 // Dados do Kanban
 let kanbanData = {
-    employees: Array.from({length: 50}, (_, i) => `Funcionário ${i+1}`),
+    employees: COLLABORATORS,
     tasks: {}
 };
 
-// Carregar dados do arquivo JSON
-async function loadKanbanData() {
-    try {
-        const response = await fetch(`https://${REPO_OWNER}.github.io/${REPO_NAME}/${DATA_FILE}`);
-        if (response.ok) {
-            kanbanData = await response.json();
-        } else {
-            // Se o arquivo não existir, inicialize com dados padrão
-            initializeDefaultData();
-        }
-    } catch (error) {
-        console.error('Erro ao carregar dados:', error);
-        initializeDefaultData();
-    }
-    
-    updateEmployeeSelect();
-    renderKanbanBoard();
-}
-
-// Inicializar dados padrão
+// Inicializar dados
 function initializeDefaultData() {
     kanbanData = {
-        employees: Array.from({length: 50}, (_, i) => `Funcionário ${i+1}`),
+        employees: COLLABORATORS,
         tasks: {}
     };
     
@@ -55,9 +98,9 @@ function initializeDefaultData() {
     });
 }
 
-// Atualizar o dropdown de funcionários
+// Atualizar o dropdown de colaboradores
 function updateEmployeeSelect() {
-    employeeSelect.innerHTML = '<option value="">Selecione um funcionário</option>';
+    employeeSelect.innerHTML = '<option value="">Selecione um colaborador</option>';
     
     kanbanData.employees.forEach(employee => {
         const option = document.createElement('option');
@@ -91,12 +134,19 @@ function renderTaskColumn(columnId, tasks, status) {
         taskElement.dataset.index = index;
         
         taskElement.innerHTML = `
-            <button class="delete-btn" data-status="${status}" data-index="${index}">×</button>
             <h3>${task.title}</h3>
             <p>${task.description || 'Sem descrição'}</p>
+            <div class="task-actions">
+                ${status !== 'done' ? 
+                    `<button class="move-btn" data-status="${status}" data-index="${index}">
+                        ${status === 'todo' ? '▶ Iniciar' : '▶ Concluir'}
+                    </button>` : ''
+                }
+                <button class="delete-btn" data-status="${status}" data-index="${index}">
+                    ✕ Excluir
+                </button>
+            </div>
         `;
-        
-        taskElement.addEventListener('click', () => moveTask(status, index));
         
         column.appendChild(taskElement);
     });
@@ -109,16 +159,23 @@ function moveTask(currentStatus, index) {
     
     const tasks = kanbanData.tasks[selectedEmployee];
     const task = tasks[currentStatus][index];
+    const taskTitle = task.title;
     
     // Remover da coluna atual
     tasks[currentStatus].splice(index, 1);
     
     // Adicionar à próxima coluna
+    let action = '';
     if (currentStatus === 'todo') {
         tasks.doing.push(task);
+        action = 'Tarefa iniciada';
     } else if (currentStatus === 'doing') {
         tasks.done.push(task);
+        action = 'Tarefa concluída';
     }
+    
+    // Registrar no histórico
+    logHistory(action, `${taskTitle} (${selectedEmployee})`);
     
     saveKanbanData();
     renderKanbanBoard();
@@ -139,6 +196,9 @@ function addNewTask(title, description) {
         createdAt: new Date().toISOString()
     });
     
+    // Registrar no histórico
+    logHistory('Nova tarefa', `${title.trim()} (${selectedEmployee})`);
+    
     saveKanbanData();
     renderKanbanBoard();
 }
@@ -148,24 +208,52 @@ function deleteTask(status, index) {
     const selectedEmployee = employeeSelect.value;
     if (!selectedEmployee) return;
     
+    const taskTitle = kanbanData.tasks[selectedEmployee][status][index].title;
     kanbanData.tasks[selectedEmployee][status].splice(index, 1);
+    
+    // Registrar no histórico
+    logHistory('Tarefa excluída', `${taskTitle} (${selectedEmployee})`);
+    
     saveKanbanData();
     renderKanbanBoard();
 }
 
-// Salvar dados no arquivo JSON (simulado para GitHub Pages)
+// Registrar histórico
+function logHistory(action, details) {
+    const historyLog = document.getElementById('history-log');
+    const now = new Date();
+    const timestamp = now.toLocaleString('pt-BR');
+    
+    const historyItem = document.createElement('div');
+    historyItem.className = 'history-item';
+    historyItem.innerHTML = `
+        <span class="history-timestamp">[${timestamp}]</span>
+        <span class="history-action">${action}:</span>
+        <span class="history-details">${details}</span>
+    `;
+    
+    historyLog.prepend(historyItem);
+}
+
+// Salvar dados (simulado para GitHub Pages)
 function saveKanbanData() {
     // Em um ambiente real com GitHub API, você faria uma requisição PUT para atualizar o arquivo
     // Aqui estamos apenas salvando no localStorage para demonstração
     localStorage.setItem('kanbanData', JSON.stringify(kanbanData));
     console.log('Dados salvos (simulado)');
+    
+    // Mostrar feedback visual
+    saveDataBtn.textContent = 'Salvo!';
+    setTimeout(() => {
+        saveDataBtn.textContent = 'Salvar Alterações';
+    }, 2000);
 }
 
 // Mostrar estatísticas
 function showStatistics() {
     const selectedEmployee = employeeSelect.value;
     if (!selectedEmployee) {
-        alert('Selecione um funcionário primeiro');
+        alert('Selecione um colaborador primeiro');
         return;
     }
     
@@ -203,7 +291,7 @@ function showStatistics() {
     statsModal.style.display = 'block';
 }
 
-// Editar lista de funcionários
+// Editar lista de colaboradores
 function editEmployees() {
     const employeeList = document.getElementById('employee-list');
     employeeList.innerHTML = '';
@@ -232,6 +320,8 @@ addTaskBtn.addEventListener('click', () => {
     taskModal.style.display = 'block';
 });
 
+saveDataBtn.addEventListener('click', saveKanbanData);
+
 printStatsBtn.addEventListener('click', showStatistics);
 
 document.getElementById('save-task').addEventListener('click', () => {
@@ -248,7 +338,7 @@ document.getElementById('add-employee').addEventListener('click', () => {
     const employeeItem = document.createElement('div');
     employeeItem.className = 'employee-item';
     employeeItem.innerHTML = `
-        <input type="text" placeholder="Novo funcionário" data-index="${newIndex}">
+        <input type="text" placeholder="Novo colaborador" data-index="${newIndex}">
         <button class="remove-employee" data-index="${newIndex}">Remover</button>
     `;
     employeeList.appendChild(employeeItem);
@@ -266,14 +356,14 @@ document.getElementById('save-employees').addEventListener('click', () => {
     
     kanbanData.employees = newEmployees;
     
-    // Garantir que todos os funcionários tenham uma estrutura de tarefas
+    // Garantir que todos os colaboradores tenham uma estrutura de tarefas
     newEmployees.forEach(employee => {
         if (!kanbanData.tasks[employee]) {
             kanbanData.tasks[employee] = { todo: [], doing: [], done: [] };
         }
     });
     
-    // Remover tarefas de funcionários excluídos
+    // Remover tarefas de colaboradores excluídos
     Object.keys(kanbanData.tasks).forEach(employee => {
         if (!newEmployees.includes(employee)) {
             delete kanbanData.tasks[employee];
@@ -296,6 +386,12 @@ document.querySelectorAll('.close').forEach(closeBtn => {
 
 // Excluir tarefa (delegação de eventos)
 kanbanBoard.addEventListener('click', (e) => {
+    if (e.target.classList.contains('move-btn')) {
+        const status = e.target.dataset.status;
+        const index = parseInt(e.target.dataset.index);
+        moveTask(status, index);
+    }
+    
     if (e.target.classList.contains('delete-btn')) {
         e.stopPropagation();
         const status = e.target.dataset.status;
@@ -304,7 +400,7 @@ kanbanBoard.addEventListener('click', (e) => {
     }
 });
 
-// Excluir funcionário (delegação de eventos)
+// Excluir colaborador (delegação de eventos)
 document.getElementById('employee-list').addEventListener('click', (e) => {
     if (e.target.classList.contains('remove-employee')) {
         e.target.parentElement.remove();
@@ -319,6 +415,9 @@ document.addEventListener('DOMContentLoaded', () => {
         kanbanData = JSON.parse(savedData);
         updateEmployeeSelect();
     } else {
-        loadKanbanData();
+        initializeDefaultData();
     }
+    
+    // Renderizar o quadro inicial
+    renderKanbanBoard();
 });
